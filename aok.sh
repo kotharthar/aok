@@ -39,10 +39,15 @@ fi
 # Check if the first argument is "repl"
 if [ "$1" == "repl" ]; then
   if [ "$2" == "-remember" ]; then
+    echo "All OK! (Remembering mode)"
+    echo ""
     remember=true
   else
+    echo "All OK!"
+    echo ""
     remember=false
   fi
+
 
   # REPL mode
   previous_input=""
