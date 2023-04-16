@@ -8,10 +8,10 @@ from colorama import init, Fore, Style, Back
 openai.api_key = os.environ["OPENAI_API_KEY"] # replace with your API key
 
 # Max number of token to generate.  # Keep it brief for commandline chat case.
-max_tokens = 256
+max_tokens = 512
 
 # Max number of chat history to feed back. If this number is too large, it will cost more input Tokens
-max_history_size = 4
+max_history_size = 8
 
 # Initial framing system prompot
 system_prompt = {"role": "system", "content":'You are smart command-line assistance. GIVE ONE ANSWER with a specific example command for questions start with "command for/to" or "how to", and explain in 3 bullets  LESS THAN 40 WORDS. For with "what is" or "explain", give one sentence definitive answer LESS THAN 20 WORDS, follow by a paragraph UPTO 75 WORDS.'}
@@ -41,7 +41,7 @@ if (len(sys.argv) > 1 and sys.argv[1:][0] == "chat"):
 
     # Call to API REF: https://platform.openai.com/docs/api-reference/chat/create
     response = openai.ChatCompletion.create(
-      model="gpt-3.5-turbo", # this is fixed for this ChatCompletion call
+      model="gpt-4", # this is fixed for this ChatCompletion call
       max_tokens=max_tokens, # number of tokens to generate
       n=1,                   #  number of completions to generate
       temperature=0.1,       # Keep it close to zero for definite answer
@@ -64,7 +64,7 @@ else:
   user_input = user_input.replace('?', '\\?') # Escape
   user_message = {"role": "user", "content": user_input}
   response = openai.ChatCompletion.create(
-      model="gpt-3.5-turbo", # this is fixed for this ChatCompletion call
+      model="gpt-4", # this is fixed for this ChatCompletion call
       max_tokens=max_tokens*2, # number of tokens to generate
       n=1,                   #  number of completions to generate
       temperature=0.7,       # Keep it close to 1 for more creative answers.
