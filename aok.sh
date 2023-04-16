@@ -6,31 +6,30 @@ from colorama import init, Fore, Style, Back
 # OpenAI Parameters
 openai.api_key = os.environ["OPENAI_API_KEY"] # replace with your API key
 
-# Max number of token to generate.
-# Keep it brief for commandline chat case.
+# Max number of token to generate.  # Keep it brief for commandline chat case.
 max_tokens = 256
 
-# Max number of chat history to feed back.
-# If this number is too large, it will cost more input Tokens
+# Max number of chat history to feed back. If this number is too large, it will cost more input Tokens
 max_history_size = 4
 
+# Initial framing system prompot
 system_prompt = {"role": "system", "content":'You are smart command-line assistance. GIVE ONE ANSWER with a specific example command for questions start with "command for/to" or "how to", and explain in 3 bullets  LESS THAN 40 WORDS. For with "what is" or "explain", give one sentence definitive answer LESS THAN 20 WORDS, follow by a paragraph UPTO 75 WORDS.'}
-
-history = []
 
 # keep_history function keeps only the last 4 messages
 # in history by keeping first in first out approach.
+history = []
 def keep_history(message):
   if len(history) > 4:
       history.pop(0)
   history.append(message)
 
+print("All " + chr(0x1F44C) + " !")
 while True:
   user_input = input("\n" + Fore.BLUE + "ME: " + Style.RESET_ALL)
 
   # If user_input is bye or exit exit the loop
   if user_input in ["bye", "exit"]:
-    print(Back.GREEN + Fore.RED + "AI:" + Style.RESET_ALL + " All OK ;)")
+    print(Back.GREEN + Fore.RED + "AI:" + Style.RESET_ALL + " All" + print(chr(0x1F44C))
     break
 
   # Prepare the input message
