@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import openai
 import os
+import sys
 from colorama import init, Fore, Style, Back
 
 # OpenAI Parameters
@@ -23,30 +24,50 @@ def keep_history(message):
       history.pop(0)
   history.append(message)
 
-print("All " + chr(0x1F44C) + " !")
-while True:
-  user_input = input("\n" + Fore.BLUE + "ME: " + Style.RESET_ALL)
+# Check the commandline paramters.
+# If the first param is `chat` then start the chat.
+if (len(sys.argv) > 1 and sys.argv[1:][0] == "chat"):
+  print("All " + chr(0x1F44C) + " !")
+  while True:
+    user_input = input("\n" + Fore.BLUE + "ME: " + Style.RESET_ALL)
 
-  # If user_input is bye or exit exit the loop
-  if user_input in ["bye", "exit"]:
-    print(Back.GREEN + Fore.RED + "AI:" + Style.RESET_ALL + " All" + print(chr(0x1F44C))
-    break
+    # If user_input is bye or exit exit the loop
+    if (user_input in ["bye", "exit"]):
+      print(Back.GREEN + Fore.RED + "AI:" + Style.RESET_ALL + " All" + chr(0x1F44C))
+      break
 
-  # Prepare the input message
+    # Prepare the input message
+    user_message = {"role": "user", "content": user_input}
+
+    # Call to API REF: https://platform.openai.com/docs/api-reference/chat/create
+    response = openai.ChatCompletion.create(
+      model="gpt-3.5-turbo", # this is fixed for this ChatCompletion call
+      max_tokens=max_tokens, # number of tokens to generate
+      n=1,                   #  number of completions to generate
+      temperature=0.1,       # Keep it close to zero for definite answer
+      messages=([system_prompt] + history + [user_message]),
+    )
+    
+    ai_message = response.choices[0].message # The reponse message from AI
+    content = ai_message["content"]          #  The content of the AI's reponse message
+    keep_history(user_message)      # Keep the last user message in history
+    keep_history(ai_message)        # Keep the last AI message in history
+    print(Back.GREEN + Fore.RED + "AI:" + Style.RESET_ALL, content)
+    print('-' * 40)  
+else:
+  the_input = sys.argv[1:]
+  # if The_input is empty read the text from STDIN
+  if(the_input == []):
+    the_input = sys.stdin.readlines()
+  user_input = " ".join(the_input)  # All string
+  user_input = user_input.replace('"', '\\"') # Escape
+  user_input = user_input.replace('?', '\\?') # Escape
   user_message = {"role": "user", "content": user_input}
-
-  # Call to API REF: https://platform.openai.com/docs/api-reference/chat/create
   response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo", # this is fixed for this ChatCompletion call
-    max_tokens=max_tokens, # number of tokens to generate
-    n=1,                   #  number of completions to generate
-    temperature=0.1,       # Keep it close to zero for definite answer
-    messages=([system_prompt] + history + [user_message]),
+      model="gpt-3.5-turbo", # this is fixed for this ChatCompletion call
+      max_tokens=max_tokens*2, # number of tokens to generate
+      n=1,                   #  number of completions to generate
+      temperature=0.7,       # Keep it close to 1 for more creative answers.
+      messages=([system_prompt] + [user_message]),
   )
-  
-  ai_message = response.choices[0].message # The reponse message from AI
-  content = ai_message["content"]          #  The content of the AI's reponse message
-  keep_history(user_message)      # Keep the last user message in history
-  keep_history(ai_message)        # Keep the last AI message in history
-  print(Back.GREEN + Fore.RED + "AI:" + Style.RESET_ALL, content)
-  print('-' * 40)  
+  print("\n" + response.choices[0].message["content"])
