@@ -1,95 +1,52 @@
-#!/bin/bash
+#!/usr/bin/env python
+import openai
+import os
 
-# OpenAI Options
-model="text-davinci-003"
-max_tokens=500
-temperature=0.2
+# OpenAI Parameters
+openai.api_key = os.environ["OPENAI_API_KEY"] # replace with your API key
 
-# This script runs the OpenAI API completions command
+# Max number of token to generate.
+# Keep it brief for commandline chat case.
+max_tokens = 256
 
-# Check if the openai binary is in the PATH
-if ! command -v openai > /dev/null; then
-  echo "Error: openai binary not found in PATH"
-  echo "Install python3 and pip3 first."
-  echo "Run 'pip install --upgrade openai' to install the OpenAI CLI"
-  echo "Reference: https://github.com/openai/openai-python"
-  exit 1
-fi
+# Max number of chat history to feed back.
+# If this number is too large, it will cost more input Tokens
+max_history_size = 4
 
-# Print the help message if the -h or --help option is provided
-if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-  echo "All OK (aok) - A simple script to run the OpenAI API completions command"
-  echo "Usage: aok repl"
-  echo "       aok repl -remember"
-  echo "       aok [input_text]"
-  echo "       aok < input_file"
-  echo ""
-  echo "Options:"
-  echo "  repl     Run the script in REPL mode, where you can enter input text interactively"
-  echo "  -remember   Additional options for the repl mode to remember the previous input text and add it to the current input text"
-  echo "  input_text   Input text to be aokd by the OpenAI API"
-  echo ""
-  echo "Examples:"
-  echo "  aok repl"
-  echo "  aok \"And the input text string like this\""
-  echo "  echo \"And the input text string like this\" | aok"
-  exit 0
-fi
+system_prompt = {"role": "system", "content":'You are smart command-line assistance. GIVE ONE ANSWER with a specific command example for question starts with "command for/to" or "how to", and explanation in 3 bullet points NOT MORE THAN 40 WORDS. For question starts with "what is", you give one sentence definitive answer LESS THAN 20 WORDS, follow by a paragraph UPTO 75 WORDS.'}
 
-# Check if the first argument is "repl"
-if [ "$1" == "repl" ]; then
-  if [ "$2" == "-remember" ]; then
-    echo "All OK! (Remembering mode)"
-    echo ""
-    remember=true
-  else
-    echo "All OK!"
-    echo ""
-    remember=false
-  fi
+history = []
 
+# keep_history function keeps only the last 4 messages
+# in history by keeping first in first out approach.
+def keep_history(message):
+  if len(history) > 4:
+      history.pop(0)
+  history.append(message)
 
-  # REPL mode
-  previous_input=""
-  while true; do
-    read -p "Me: " input_text
-    if [ -z "$input_text" ]; then
-      break
-    fi
-    if [ "$input_text" == "bye" ]; then
-      break
-    fi
-    if [ "$remember" = true ]; then
-      previous_input="$previous_input $input_text"
+while True:
+  user_input = input("User: ")
 
-      # Remove the prefix and suffix extra spaces from the input_text
-      input_text=$(echo "$previous_input" | sed 's/^ *//;s/ *$//' | sed 's/\?/\./g')
-    else
-      input_text=$(echo "$input_text" | sed 's/^ *//;s/ *$//' | sed 's/\?/\./g')
-    fi
+  # If user_input is bye or exit exit the loop
+  if user_input in ["bye", "exit"]:
+    print("AI: All OK ;)")
+    break
 
-    num_tokens=$(echo "$input_text" | wc -w)
-    echo -n "($num_tokens) AI: "
-    output_text=$(openai api completions.create --stream -m $model -M $max_tokens -t $temperature -p "$input_text")
+  # Prepare the input message
+  user_message = {"role": "user", "content": user_input}
 
-    # Remove the input_text from the output_text and display
-    echo "$output_text" | awk -v text="$input_text" '{gsub(text, "")};1' |  tr -d '\n\n'
-    echo ""
-    echo ""
+  # Call to API REF: https://platform.openai.com/docs/api-reference/chat/create
+  response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo", # this is fixed for this ChatCompletion call
+    max_tokens=max_tokens, # number of tokens to generate
+    n=1,                   #  number of completions to generate
+    temperature=0.1,       # Keep it close to zero for definite answer
+    messages=([system_prompt] + history + [user_message]),
+  )
+  
+  ai_message = response.choices[0].message # The reponse message from AI
+  content = ai_message["content"]          #  The content of the AI's reponse message
+  keep_history(user_message)      # Keep the last user message in history
+  keep_history(ai_message)        # Keep the last AI message in history
 
-    # Added up the previous input text
-    if [ "$remember" = true ]; then
-        previous_input=$(echo $output_text | tr -d '\n')
-    fi
-  done
-else
-  # Get input text from either the command line argument or from a pipe
-  if [ $# -eq 0 ]; then
-    input_text=$(cat)
-  else
-    input_text="$@"
-  fi
-
-  # Run the OpenAI API completions command with input text
-  openai api completions.create --stream -m $model -M $max_tokens -t $temperature -p "$input_text"
-fi
+  print("AI:",content)
