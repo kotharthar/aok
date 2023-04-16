@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import openai
 import os
+from colorama import init, Fore, Style, Back
 
 # OpenAI Parameters
 openai.api_key = os.environ["OPENAI_API_KEY"] # replace with your API key
@@ -13,7 +14,7 @@ max_tokens = 256
 # If this number is too large, it will cost more input Tokens
 max_history_size = 4
 
-system_prompt = {"role": "system", "content":'You are smart command-line assistance. GIVE ONE ANSWER with a specific command example for question starts with "command for/to" or "how to", and explanation in 3 bullet points NOT MORE THAN 40 WORDS. For question starts with "what is", you give one sentence definitive answer LESS THAN 20 WORDS, follow by a paragraph UPTO 75 WORDS.'}
+system_prompt = {"role": "system", "content":'You are smart command-line assistance. GIVE ONE ANSWER with a specific example command for questions start with "command for/to" or "how to", and explain in 3 bullets  LESS THAN 40 WORDS. For with "what is" or "explain", give one sentence definitive answer LESS THAN 20 WORDS, follow by a paragraph UPTO 75 WORDS.'}
 
 history = []
 
@@ -25,11 +26,11 @@ def keep_history(message):
   history.append(message)
 
 while True:
-  user_input = input("User: ")
+  user_input = input("\n" + Fore.BLUE + "ME: " + Style.RESET_ALL)
 
   # If user_input is bye or exit exit the loop
   if user_input in ["bye", "exit"]:
-    print("AI: All OK ;)")
+    print(Back.GREEN + Fore.RED + "AI:" + Style.RESET_ALL + " All OK ;)")
     break
 
   # Prepare the input message
@@ -48,5 +49,5 @@ while True:
   content = ai_message["content"]          #  The content of the AI's reponse message
   keep_history(user_message)      # Keep the last user message in history
   keep_history(ai_message)        # Keep the last AI message in history
-
-  print("AI:",content)
+  print(Back.GREEN + Fore.RED + "AI:" + Style.RESET_ALL, content)
+  print('-' * 40)  
