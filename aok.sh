@@ -11,16 +11,16 @@ openai.api_key = os.environ["OPENAI_API_KEY"] # replace with your API key
 max_tokens = 512
 
 # Max number of chat history to feed back. If this number is too large, it will cost more input Tokens
-max_history_size = 8
+max_history_size = 4
 
 # Initial framing system prompot
-system_prompt = {"role": "system", "content":'You are smart command-line assistance. GIVE ONE ANSWER with a specific example command for questions start with "command for/to" or "how to", and explain in 3 bullets  LESS THAN 40 WORDS. For with "what is" or "explain", give one sentence definitive answer LESS THAN 20 WORDS, follow by a paragraph UPTO 75 WORDS.YOU CAN EXCEED WORD LIMIT in case of "explain" question.'}
+system_prompt = {"role": "system", "content":'For questions:\n A: Containing "command for/to" or "how to", provide an example command with a brief explanation in 5 bullets or less, each under 40 words.\n B: With "what is" or "explain", give a concise answer under 20 words, followed by a 75-word paragraph. For "explain" use additional words if necessary.\n C: Needing "code example" or "sample code", present example code in the specified language, or Python if not specified, plus an explanation in bullet points.\n D: Asking for "step by step" or "steps", detail steps in numbered bullets, each under 25 words.\n E: Requiring "summary" or "summarize" or for undefined instructions, create a 50-word key summary sentence, with context summaries in bullets under 25 words.\n \n Strictly use given format:\n For A, B, C:\n """\n -------- Code --------\n \n {Command/Code}\n \n ----- Explanation -----\n \n Bullet 1\n """\n For D, E:\n """\n ---- [Steps | Summary] ----\n {Output}\n """ '}
 
 # keep_history function keeps only the last 4 messages
 # in history by keeping first in first out approach.
 history = []
 def keep_history(message):
-  if len(history) > 4:
+  if len(history) == max_history_size:
       history.pop(0)
   history.append(message)
 
@@ -41,10 +41,10 @@ if (len(sys.argv) > 1 and sys.argv[1:][0] == "chat"):
 
     # Call to API REF: https://platform.openai.com/docs/api-reference/chat/create
     response = openai.ChatCompletion.create(
-      model="gpt-4", # this is fixed for this ChatCompletion call
+      model="gpt-3.5-turbo", # this is fixed for this ChatCompletion call
       max_tokens=max_tokens, # number of tokens to generate
       n=1,                   #  number of completions to generate
-      temperature=0.1,       # Keep it close to zero for definite answer
+      temperature=1.0,       # Keep it close to zero for definite answer
       messages=([system_prompt] + history + [user_message]),
     )
     
@@ -64,10 +64,10 @@ else:
   user_input = user_input.replace('?', '\\?') # Escape
   user_message = {"role": "user", "content": user_input}
   response = openai.ChatCompletion.create(
-      model="gpt-4", # this is fixed for this ChatCompletion call
+      model="gpt-3.5-turbo", # this is fixed for this ChatCompletion call
       max_tokens=max_tokens*2, # number of tokens to generate
       n=1,                   #  number of completions to generate
-      temperature=0.7,       # Keep it close to 1 for more creative answers.
+      temperature=1.0,       # Keep it close to 1 for more creative answers.
       messages=([system_prompt] + [user_message]),
   )
   print("\n" + response.choices[0].message["content"])
