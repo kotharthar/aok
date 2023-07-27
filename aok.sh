@@ -54,6 +54,20 @@ if (len(sys.argv) > 1 and sys.argv[1:][0] == "chat"):
     keep_history(ai_message)        # Keep the last AI message in history
     print(Back.GREEN + Fore.RED + "AI:" + Style.RESET_ALL, content)
     print('-' * 40)  
+ elif (len(sys.argv) > 1 and sys.argv[1:][0] == "raw"):
+    the_input = sys.stdin.readlines()
+    user_input = " ".join(the_input)  # All string
+    user_input = user_input.replace('"', '\\"') # Escape
+    user_input = user_input.replace('?', '\\?') # Escape
+    user_message = {"role": "user", "content": user_input}
+    response = openai.ChatCompletion.create(
+       model="gpt-4", # this is fixed for this ChatCompletion call
+       max_tokens=max_tokens*2, # number of tokens to generate
+       n=1,                   #  number of completions to generate
+       temperature=1.0,       # Keep it close to 1 for more creative answers.
+       messages=([{"role":"system", "content": "Act as a helpful smart bot. Answer the given question is brief and most smartest way possible."}] + [user_message]),
+    )
+    print("\n" + response.choices[0].message["content"])
 else:
   the_input = sys.argv[1:]
   # if The_input is empty read the text from STDIN
